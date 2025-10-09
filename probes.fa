@@ -1,0 +1,12 @@
+>sequence1 human rev-compl_REORIENTED_3_PROBE
+CCCGGGAAATTT
+>sequence1 human rev-compl_REORIENTED_5_PROBE
+CCCGGGAAATTT
+>sequence2 mouse_3_PROBE
+AAATTTCCCGGA
+>sequence2 mouse_5_PROBE
+AAATTTCTCGGA
+>sequence3 mouse_3_PROBE
+AAATTTCCCGGA
+>sequence3 mouse_5_PROBE
+AAATTTCTCGGA
