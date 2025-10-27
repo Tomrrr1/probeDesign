@@ -3,6 +3,7 @@
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
+#include <unordered_set>
 #include <vector>
 
 bool checkSeq( const std::string& line )
@@ -50,10 +51,20 @@ fastaRecord readFasta(const std::string& filename)
 void panelOut(const fastaRecord& probePanel, const std::filesystem::path& outdir)
 {
     std::ofstream file(outdir.string() + "/probes.fa");
+    std::unordered_set<std::string> seen;
+    seen.reserve(probePanel.rec.size());
+
     for (const auto& [id, seq] : probePanel.rec)
     {
-        file << id << "\n"
-             << seq << "\n";
+        // Write to file if insert into unordered set works (seq is unique).
+        if (seen.insert(seq).second) 
+        {
+            file << id << "\n"
+                 << seq << "\n";
+        } else
+        {
+            std::cout << id << " probe is a duplicate. Skipping.\n";
+        }
     }
     file.close();
     std::cout << "Probe sequences written to " << outdir.string() + "/probes.fa\n";

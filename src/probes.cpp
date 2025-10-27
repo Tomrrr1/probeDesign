@@ -5,6 +5,11 @@
 // Function to take the reverse complement of a FASTA sequence based on an identifying header tag
 fastaRecord reverseSeq(fastaRecord fa, std::string reg)
 {
+    if ( reg.empty() ) 
+    {   
+        std::cerr << "No regex provided. All sequences are assumed to be in 5' -> 3' orientation.\n";
+        return fa;
+    }
     std::regex exp(reg);
     // Manual iterator so that we can safely modify the container in the loop
     for ( auto it = fa.rec.begin(); it != fa.rec.end(); ) 
@@ -49,22 +54,22 @@ fastaRecord reverseSeq(fastaRecord fa, std::string reg)
     return fa;
 }
 
-// Function to tile the sequence with probes
+// Function to tile the sequence with non-overlapping probes
 fastaRecord probeTile(const std::string& seq, const std::string& id, int probe_len, int offset)
 {
     fastaRecord probePanel;
-    int l = 0;
-    int r = probe_len - 1;
-    while ( r < (int)seq.length() - probe_len - offset )
+    int l = offset;
+    int r = probe_len - 1 + offset;
+    while ( l + probe_len <= (int)seq.length() - offset )
     {
         std::string sub = seq.substr(l, probe_len);
         double gc = gcContent(sub);
-        if (gc > 0.4 && gc < 0.6)
+        if (gc >= 0.4 && gc <= 0.6)
         {
             std::string new_id = id + "_" + std::to_string(l) + "_" + std::to_string(r);
             probePanel.rec[new_id] = sub;
-            l += probe_len - 1;
-            r += probe_len - 1;
+            l += probe_len;
+            r += probe_len;
         } 
         else
         {
@@ -112,10 +117,9 @@ fastaRecord designProbe(const fastaRecord& fa, int probe_len, int offset, char m
         {
             throw std::runtime_error("The number of nucleotides in each sequence must be less than INT_MAX.");
         }
-        if (probe_len > (int)seq.size())
+        if ( probe_len + offset > (int)seq.size() )
         {
-            std::cerr << "probe_len is longer than " << id 
-                      << ". Skipping probe creation." << "\n";
+            std::cerr << "probe_len is longer than " << id << ". Skipping probe creation." << "\n";
             continue;
         }
         switch (mode)
@@ -138,7 +142,7 @@ fastaRecord designProbe(const fastaRecord& fa, int probe_len, int offset, char m
             {
                 if (2*probe_len > (int)seq.size() - 2*offset)
                 {
-                    std::cerr << "Unable to design two non-overlapping probes for  " << id
+                    std::cerr << "Unable to design non-overlapping probes for  " << id
                               << ". Skipping probe creation." << "\n";
                     continue;
                 }
