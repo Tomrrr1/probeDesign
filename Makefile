@@ -1,6 +1,7 @@
 CXX = g++
-CXXFLAGS = -std=c++17 -Iinclude -I/opt/homebrew/include -Wall -Wextra -O2
-LDFLAGS = -L/opt/homebrew/lib -lboost_program_options
+BOOST_ROOT ?= /opt/homebrew
+CXXFLAGS = -std=c++17 -Iinclude -I$(BOOST_ROOT)/include -Wall -Wextra -O2
+LDFLAGS = -L$(BOOST_ROOT)/lib -lboost_program_options
 
 SRCS = src/main.cpp src/io.cpp src/probes.cpp
 OBJS = $(SRCS:.cpp=.o)
