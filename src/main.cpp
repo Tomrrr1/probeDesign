@@ -10,7 +10,7 @@ int main(int argc, char* argv[])
 {
     std::string fasta, regex;
     std::filesystem::path outdir;
-    int probe_len, offset;
+    int probe_len, offset, spacing;
     char mode{};
 
     po::options_description desc("\nAllowed options");
@@ -20,22 +20,22 @@ int main(int argc, char* argv[])
         ("offset,b", 
             po::value<int>(&offset)->default_value(0), 
             "Ignore the first and/or last N nucleotides of the target sequence in probe creation.")
+        ("spacing,s", 
+            po::value<int>(&spacing)->default_value(0), 
+            "The spacing between probes. Only used in 't' mode.")
         ("mode,m", po::value<char>(&mode)->required(), 
             "Probe creation mode:\n"
                 "   5: \tsingle 5' probe per sequence at [offset, offset + probe_len).\n"
                 "   3: \tsingle 3' probe per sequence ending offset bases from the 3' end.\n"
                 "   a: \tboth 5' and 3' probes. If probes overlap the sequences are skipped.\n"
                 "   t: \ttile each sequence with probes, skipping regions with extreme GC content.")
-        ("regex,r", 
-            po::value<std::string>(&regex), 
-            "Regular expression. Sequences with a matching header are reverse-complemented before probe design.")
         ("out,o", 
             po::value<std::filesystem::path>(&outdir)->default_value("./"), 
             "Directory where 'probes.fa' will be written.")
         ("help,h", "print programme options.");
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
-    if (vm.count("help")) 
+    if (vm.count("help") || argc == 1) 
     {
         std::cout << desc << "\n";
         return -1;
@@ -50,8 +50,7 @@ int main(int argc, char* argv[])
         }
         fastaRecord faRecords = readFasta(fasta);
         std::cout << "Total records read = " << faRecords.rec.size() << '\n';
-        fastaRecord updateFa = reverseSeq(faRecords, regex);
-        fastaRecord probePanel = designProbe(updateFa, probe_len, offset, mode);
+        fastaRecord probePanel = designProbe(faRecords, probe_len, offset, mode, spacing);
         panelOut(probePanel, outdir);
     }
     catch (const std::exception& e)

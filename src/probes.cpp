@@ -2,60 +2,8 @@
 #include <iostream>
 #include <regex>
 
-// Function to take the reverse complement of a FASTA sequence based on an identifying header tag
-fastaRecord reverseSeq(fastaRecord fa, std::string reg)
-{
-    if ( reg.empty() ) 
-    {   
-        std::cerr << "No regex provided. All sequences are assumed to be in 5' -> 3' orientation.\n";
-        return fa;
-    }
-    std::regex exp(reg);
-    // Manual iterator so that we can safely modify the container in the loop
-    for ( auto it = fa.rec.begin(); it != fa.rec.end(); ) 
-    {
-        std::string id = it->first;
-        std::string seq = it->second;
-        if ( std::regex_search(id, exp) )
-        {
-            std::string rev;
-            for ( auto it = seq.rbegin(); it != seq.rend(); it++ )
-            {
-                char base = *it;
-                switch (base)
-                {
-                    case 'A':
-                        rev.append(1, 'T');
-                        break;
-                    case 'T': 
-                        rev.append(1, 'A');
-                        break;
-                    case 'C':
-                        rev.append(1, 'G');
-                        break;
-                    case 'G':
-                        rev.append(1, 'C');
-                        break;
-                }
-            }
-            auto nh = fa.rec.extract(it++); // nh owns the node so it can be modified
-            nh.key() = id + "_REORIENTED";
-            nh.mapped() = rev;
-            fa.rec.insert(std::move(nh));
-
-        } 
-        else
-        { 
-            it++;
-            continue;
-        }
-    }
-    
-    return fa;
-}
-
 // Function to tile the sequence with non-overlapping probes
-fastaRecord probeTile(const std::string& seq, const std::string& id, int probe_len, int offset)
+fastaRecord probeTile(const std::string& seq, const std::string& id, int probe_len, int spacing, int offset)
 {
     fastaRecord probePanel;
     int l = offset;
@@ -68,14 +16,15 @@ fastaRecord probeTile(const std::string& seq, const std::string& id, int probe_l
         {
             std::string new_id = id + "_" + std::to_string(l) + "_" + std::to_string(r);
             probePanel.rec[new_id] = sub;
-            l += probe_len;
-            r += probe_len;
+            l += probe_len + spacing;
+            r += probe_len + spacing;
         } 
         else
         {
             l++;
             r++;
         }
+
     }
 
     return probePanel;
@@ -105,7 +54,7 @@ double gcContent(const std::string& seq)
 }
 
 // Design probes
-fastaRecord designProbe(const fastaRecord& fa, int probe_len, int offset, char mode)
+fastaRecord designProbe(const fastaRecord& fa, int probe_len, int offset, char mode, int spacing)
 {
     if (offset < 0) throw std::runtime_error("offset must be a non-negative integer.");
     fastaRecord probePanel;
@@ -124,21 +73,21 @@ fastaRecord designProbe(const fastaRecord& fa, int probe_len, int offset, char m
         }
         switch (mode)
         {
-            case '5':
+            case '5': // Design a 5' probe
             {
                 new_id5 = id + "_5_PROBE";
                 probe5 = seq.substr(offset, probe_len);
                 probePanel.rec[new_id5] = probe5;
                 break;
             }
-            case '3':
+            case '3': // Design a 3' probe
             {
                 new_id3 = id + "_3_PROBE";
                 probe3 = seq.substr((int)seq.size() - offset - probe_len, probe_len);
                 probePanel.rec[new_id3] = probe3;
                 break;
             }
-            case 'a':
+            case 'a': // Design a 5' and 3' probe
             {
                 if (2*probe_len > (int)seq.size() - 2*offset)
                 {
@@ -154,9 +103,9 @@ fastaRecord designProbe(const fastaRecord& fa, int probe_len, int offset, char m
                 probePanel.rec[new_id3] = probe3;
                 break;
             }
-            case 't':
+            case 't': // Tile the sequence with probes
             {
-                fastaRecord tiled = probeTile(seq, id, probe_len, offset);
+                fastaRecord tiled = probeTile(seq, id, probe_len, spacing, offset);
                 probePanel.rec.insert(tiled.rec.begin(), tiled.rec.end());
                 break;
             }
