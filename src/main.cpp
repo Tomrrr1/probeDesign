@@ -35,15 +35,17 @@ int main(int argc, char* argv[])
         ("help,h", "print programme options.");
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
-    if (vm.count("help") || argc == 1) {
+    if (vm.count("help") || argc == 1) 
+    {
         std::cout << desc << "\n";
         return -1;
     }
     po::notify(vm);
     
-    try 
+    try
     {
-        if (!std::filesystem::is_directory(outdir)) {
+        if (!std::filesystem::is_directory(outdir))
+        {
             throw std::runtime_error(outdir.string() + " does not exist. Please enter a valid path");
         }
         fastaRecord faRecords = readFasta(fasta);
@@ -51,7 +53,8 @@ int main(int argc, char* argv[])
         fastaRecord probePanel = designProbe(faRecords, probe_len, offset, mode, spacing);
         panelOut(probePanel, outdir);
     }
-    catch (const std::exception& e) {
+    catch (const std::exception& e)
+    {
         std::cerr << "Error: " << e.what() << "\n";
         return -1;
     }

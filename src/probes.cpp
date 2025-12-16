@@ -8,16 +8,19 @@ fastaRecord probeTile(const std::string& seq, const std::string& id, int probe_l
     fastaRecord probePanel;
     int l = offset;
     int r = probe_len - 1 + offset;
-    while ( l + probe_len <= (int)seq.length() - offset ) {
+    while ( l + probe_len <= (int)seq.length() - offset )
+    {
         std::string sub = seq.substr(l, probe_len);
         double gc = gcContent(sub);
-        if (gc >= 0.4 && gc <= 0.6) {
+        if (gc >= 0.4 && gc <= 0.6)
+        {
             std::string new_id = id + "_" + std::to_string(l) + "_" + std::to_string(r);
             probePanel.rec[new_id] = sub;
             l += probe_len + spacing;
             r += probe_len + spacing;
         } 
-        else {
+        else
+        {
             l++;
             r++;
         }
@@ -32,8 +35,10 @@ double gcContent(const std::string& seq)
 {
     double n_g = 0.0;
     double n_c = 0.0;
-    for ( char base : seq ) {
-        switch (base) {
+    for ( char base : seq )
+    {
+        switch (base)
+        {
             case 'G':
                 n_g+=1.0;
                 break;
@@ -55,15 +60,19 @@ fastaRecord designProbe(const fastaRecord& fa, int probe_len, int offset, char m
     fastaRecord probePanel;
     std::string new_id5, new_id3, probe5, probe3;
 
-    for (const auto& [id, seq] : fa.rec ) {
-        if ( seq.size() > INT_MAX ) {
+    for (const auto& [id, seq] : fa.rec )
+    {
+        if ( seq.size() > INT_MAX )
+        {
             throw std::runtime_error("The number of nucleotides in each sequence must be less than INT_MAX.");
         }
-        if ( probe_len + offset > (int)seq.size() ) {
+        if ( probe_len + offset > (int)seq.size() )
+        {
             std::cerr << "probe_len is longer than " << id << ". Skipping probe creation." << "\n";
             continue;
         }
-        switch (mode) {
+        switch (mode)
+        {
             case '5': // Design a 5' probe
             {
                 new_id5 = id + "_5_PROBE";
@@ -80,7 +89,8 @@ fastaRecord designProbe(const fastaRecord& fa, int probe_len, int offset, char m
             }
             case 'a': // Design a 5' and 3' probe
             {
-                if (2*probe_len > (int)seq.size() - 2*offset) {
+                if (2*probe_len > (int)seq.size() - 2*offset)
+                {
                     std::cerr << "Unable to design non-overlapping probes for  " << id
                               << ". Skipping probe creation." << "\n";
                     continue;
